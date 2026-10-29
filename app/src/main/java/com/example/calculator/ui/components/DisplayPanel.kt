@@ -1,6 +1,9 @@
 // [新增] 显示区：历史入口 + 表达式行 + 结果行，超宽时横向滚动并自动滚到末尾
 package com.example.calculator.ui.components
 
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,14 +23,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calculator.R
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DisplayPanel(
     expression: String,
@@ -40,6 +47,10 @@ fun DisplayPanel(
     val expressionScroll = rememberScrollState()
     val resultScroll = rememberScrollState()
     val historyLabel = stringResource(R.string.history_open)
+    // [新增] 长按结果复制
+    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
+    val copiedMessage = stringResource(R.string.copy_result)
 
     LaunchedEffect(expression, expressionScroll.maxValue) {
         expressionScroll.animateScrollTo(expressionScroll.maxValue)
@@ -85,7 +96,17 @@ fun DisplayPanel(
             Spacer(Modifier.height(8.dp))
             Text(
                 text = result.ifEmpty { " " },
-                modifier = Modifier.horizontalScroll(resultScroll),
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = {
+                            if (result.isNotEmpty() && !isError) {
+                                clipboard.setText(AnnotatedString(result))
+                                Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                    )
+                    .horizontalScroll(resultScroll),
                 color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 fontSize = 36.sp,
                 fontWeight = FontWeight.SemiBold,

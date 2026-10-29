@@ -3,6 +3,7 @@ package com.example.calculator.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.calculator.data.HistoryRepository
 import com.example.calculator.domain.CalcResult
@@ -24,20 +25,29 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class CalculatorViewModel(application: Application) : AndroidViewModel(application) {
+class CalculatorViewModel(
+    application: Application,
+    private val savedStateHandle: SavedStateHandle,
+) : AndroidViewModel(application) {
 
     private val engine = CalculatorEngine()
     private val historyRepository = HistoryRepository(application)
 
-    private var snapshot = InputSnapshot()
+    // [新增] 输入状态写入 SavedStateHandle，进程被杀后仍可恢复
+    private var snapshot = InputSnapshot(
+        expression = savedStateHandle[KEY_EXPRESSION] ?: "",
+        justEvaluated = savedStateHandle[KEY_JUST_EVALUATED] ?: false,
+        resultValue = savedStateHandle[KEY_RESULT_VALUE] ?: "",
+    )
 
     // [新增] 连续按等号时重复的运算
-    private var repeatOperation: RepeatOperation? = null
+    private var repeatOperation: RepeatOperation? = restoreRepeatOperation()
 
     private val _state = MutableStateFlow(CalcState())
     val state: StateFlow<CalcState> = _state.asStateFlow()
 
     init {
+        restoreState()
         viewModelScope.launch {
             historyRepository.items.collect { items ->
                 _state.update { it.copy(history = items) }
@@ -51,6 +61,7 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
         } else {
             repeatOperation = null
             snapshot = InputProcessor.process(snapshot, key)
+            persist()
             refresh()
         }
     }
@@ -62,6 +73,7 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
             resultValue = item.value.ifEmpty { item.result.replace(",", "") },
         )
         repeatOperation = RepeatExtractor.extract(item.expression)
+        persist()
         _state.update {
             it.copy(
                 expression = item.expression,
@@ -115,6 +127,7 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
                     resultValue = result.value.toPlainString(),
                 )
                 repeatOperation = RepeatExtractor.extract(expression)
+                persist()
                 _state.update {
                     it.copy(
                         expression = expression,
@@ -138,7 +151,51 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    /** 进程重建后回填界面：已完成的结果直接复用保存值，输入中的算式重新求值 */
+    private fun restoreState() {
+        if (snapshot.expression.isEmpty()) return
+        if (snapshot.justEvaluated) {
+            val value = snapshot.resultValue.toBigDecimalOrNull()
+            _state.update {
+                it.copy(
+                    expression = snapshot.expression,
+                    preview = value?.let(NumberFormatter::format) ?: "",
+                    error = null,
+                    upper = value?.let(ChineseAmountFormatter::format),
+                )
+            }
+        } else {
+            refresh()
+        }
+    }
+
+    private fun persist() {
+        savedStateHandle[KEY_EXPRESSION] = snapshot.expression
+        savedStateHandle[KEY_JUST_EVALUATED] = snapshot.justEvaluated
+        savedStateHandle[KEY_RESULT_VALUE] = snapshot.resultValue
+
+        val repeat = repeatOperation
+        if (repeat == null) {
+            savedStateHandle.remove<String>(KEY_REPEAT_OPERATOR)
+            savedStateHandle.remove<String>(KEY_REPEAT_OPERAND)
+        } else {
+            savedStateHandle[KEY_REPEAT_OPERATOR] = repeat.operator.toString()
+            savedStateHandle[KEY_REPEAT_OPERAND] = repeat.operand
+        }
+    }
+
+    private fun restoreRepeatOperation(): RepeatOperation? {
+        val symbol = savedStateHandle.get<String>(KEY_REPEAT_OPERATOR) ?: return null
+        val operand = savedStateHandle.get<String>(KEY_REPEAT_OPERAND) ?: return null
+        return RepeatOperation(operator = symbol[0], operand = operand)
+    }
+
     private companion object {
         val TRAILING_CHARS = setOf('+', '-', '×', '÷', '.')
+        const val KEY_EXPRESSION = "expression"
+        const val KEY_JUST_EVALUATED = "justEvaluated"
+        const val KEY_RESULT_VALUE = "resultValue"
+        const val KEY_REPEAT_OPERATOR = "repeatOperator"
+        const val KEY_REPEAT_OPERAND = "repeatOperand"
     }
 }

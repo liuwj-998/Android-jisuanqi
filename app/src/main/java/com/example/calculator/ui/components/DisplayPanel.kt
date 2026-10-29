@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -51,6 +54,9 @@ fun DisplayPanel(
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     val copiedMessage = stringResource(R.string.copy_result)
+    // [新增] 大写金额默认不展示，按需展开
+    var showUpper by rememberSaveable { mutableStateOf(false) }
+    val upperToggleLabel = stringResource(R.string.upper_toggle)
 
     LaunchedEffect(expression, expressionScroll.maxValue) {
         expressionScroll.animateScrollTo(expressionScroll.maxValue)
@@ -72,8 +78,22 @@ fun DisplayPanel(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (!upper.isNullOrEmpty()) {
+                    TextButton(onClick = { showUpper = !showUpper }) {
+                        Text(
+                            text = upperToggleLabel,
+                            fontSize = 14.sp,
+                            color = if (showUpper) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
                 TextButton(
                     onClick = onOpenHistory,
                     modifier = Modifier.semantics { contentDescription = historyLabel },
@@ -112,7 +132,7 @@ fun DisplayPanel(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
             )
-            if (!upper.isNullOrEmpty()) {
+            if (showUpper && !upper.isNullOrEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = upper,

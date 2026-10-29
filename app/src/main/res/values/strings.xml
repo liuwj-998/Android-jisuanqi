@@ -8,4 +8,6 @@
     <string name="history_open">打开历史记录</string>
     <!-- [新增] 长按复制提示 -->
     <string name="copy_result">已复制结果</string>
+    <!-- [新增] 大写金额切换入口 -->
+    <string name="upper_toggle">大写</string>
 </resources>

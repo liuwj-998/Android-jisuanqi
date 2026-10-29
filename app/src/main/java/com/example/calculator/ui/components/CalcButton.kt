@@ -20,9 +20,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.calculator.model.CalcKey
 import kotlinx.coroutines.delay
 
 // [新增] 长按连删的起延时与重复间隔
@@ -55,6 +60,17 @@ fun CalcButton(
 
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
+    // [新增] 触感反馈与无障碍描述
+    val haptic = LocalHapticFeedback.current
+    val description = spec.key.contentDescription()
+    val handleClick = {
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        onClick()
+    }
+    val handleLongClick = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        onLongClick?.invoke()
+    }
 
     // [新增] 按住不放时重复触发（退格连续删除）
     if (onRepeat != null) {
@@ -73,14 +89,14 @@ fun CalcButton(
         Modifier.combinedClickable(
             interactionSource = interactionSource,
             indication = LocalIndication.current,
-            onClick = onClick,
-            onLongClick = onLongClick,
+            onClick = handleClick,
+            onLongClick = handleLongClick,
         )
     } else {
         Modifier.clickable(
             interactionSource = interactionSource,
             indication = LocalIndication.current,
-            onClick = onClick,
+            onClick = handleClick,
         )
     }
 
@@ -88,7 +104,8 @@ fun CalcButton(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .background(container)
-            .then(gestureModifier),
+            .then(gestureModifier)
+            .semantics { if (description != null) contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -98,4 +115,23 @@ fun CalcButton(
             fontWeight = FontWeight.Medium,
         )
     }
+}
+
+// [新增] 符号键的读屏文案：数字键仍由文本自身播报，无需重复描述
+private fun CalcKey.contentDescription(): String? = when (this) {
+    is CalcKey.Operator -> when (symbol) {
+        '+' -> "加"
+        '-' -> "减"
+        '×' -> "乘"
+        else -> "除"
+    }
+
+    CalcKey.Decimal -> "小数点"
+    CalcKey.Percent -> "百分号"
+    CalcKey.Sign -> "正负号"
+    CalcKey.Clear -> "清空"
+    CalcKey.Backspace -> "退格"
+    CalcKey.Equals -> "等号"
+    CalcKey.Paren -> "括号"
+    is CalcKey.Digit -> null
 }

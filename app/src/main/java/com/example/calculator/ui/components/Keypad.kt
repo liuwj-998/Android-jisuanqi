@@ -72,8 +72,12 @@ fun Keypad(
                     CalcButton(
                         spec = spec,
                         onClick = { onKey(spec.key) },
-                        // [新增] 长按 AC 清空历史，按住退格连续删除
-                        onLongClick = if (spec.key == CalcKey.Clear) onClearHistory else null,
+                        // [新增] 长按 AC 清空历史；退格的长按由按住循环处理，这里吞掉事件避免松手时多删一位
+                        onLongClick = when (spec.key) {
+                            CalcKey.Clear -> onClearHistory
+                            CalcKey.Backspace -> ({})
+                            else -> null
+                        },
                         onRepeat = if (spec.key == CalcKey.Backspace) ({ onKey(spec.key) }) else null,
                         modifier = Modifier
                             .weight(1f)

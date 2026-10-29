@@ -35,9 +35,9 @@ class CalculatorViewModel(
 
     // [新增] 输入状态写入 SavedStateHandle，进程被杀后仍可恢复
     private var snapshot = InputSnapshot(
-        expression = savedStateHandle[KEY_EXPRESSION] ?: "",
-        justEvaluated = savedStateHandle[KEY_JUST_EVALUATED] ?: false,
-        resultValue = savedStateHandle[KEY_RESULT_VALUE] ?: "",
+        expression = savedStateHandle.get<String>(KEY_EXPRESSION) ?: "",
+        justEvaluated = savedStateHandle.get<Boolean>(KEY_JUST_EVALUATED) ?: false,
+        resultValue = savedStateHandle.get<String>(KEY_RESULT_VALUE) ?: "",
     )
 
     // [新增] 连续按等号时重复的运算

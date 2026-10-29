@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- [新增] 仅提供窗口主题，界面配色全部由 Compose MaterialTheme 控制 -->
+    <style name="Theme.Calculator" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/app_background</item>
+    </style>
+</resources>

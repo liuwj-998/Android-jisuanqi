@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- [新增] 颜色资源：Compose 主题的窗口底色 -->
+    <color name="app_background">#F7F7F8</color>
+    <color name="ic_launcher_background">#4B3FE3</color>
+</resources>

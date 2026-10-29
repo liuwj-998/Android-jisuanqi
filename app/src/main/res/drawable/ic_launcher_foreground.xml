@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- [新增] 自适应图标前景：计算器图形 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,30 h44 v48 h-44 z" />
+    <path
+        android:fillColor="#4B3FE3"
+        android:pathData="M37,35 h34 v10 h-34 z" />
+    <path
+        android:fillColor="#4B3FE3"
+        android:pathData="M37,50 h8 v8 h-8 z M50,50 h8 v8 h-8 z M63,50 h8 v8 h-8 z M37,62 h8 v8 h-8 z M50,62 h8 v8 h-8 z M63,62 h8 v8 h-8 z" />
+</vector>

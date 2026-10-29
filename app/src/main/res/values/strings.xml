@@ -6,5 +6,4 @@
     <string name="history_empty">还没有计算记录</string>
     <string name="history_clear">清空</string>
     <string name="history_open">打开历史记录</string>
-    <string name="backspace_desc">退格</string>
 </resources>

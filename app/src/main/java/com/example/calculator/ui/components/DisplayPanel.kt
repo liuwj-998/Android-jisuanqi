@@ -32,6 +32,7 @@ import com.example.calculator.R
 fun DisplayPanel(
     expression: String,
     result: String,
+    upper: String?,
     isError: Boolean,
     onOpenHistory: () -> Unit,
     modifier: Modifier = Modifier,
@@ -90,6 +91,15 @@ fun DisplayPanel(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
             )
+            if (!upper.isNullOrEmpty()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = upper,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = if (upper.length > 18) 12.sp else 14.sp,
+                    maxLines = 2,
+                )
+            }
         }
     }
 }

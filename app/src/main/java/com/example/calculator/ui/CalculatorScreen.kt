@@ -65,6 +65,7 @@ fun CalculatorScreen(
             DisplayPanel(
                 expression = state.expression,
                 result = state.error ?: state.preview,
+                upper = state.upper,
                 isError = state.error != null,
                 onOpenHistory = { showHistory = true },
                 modifier = Modifier
@@ -98,7 +99,7 @@ fun CalculatorScreen(
 private fun CalculatorScreenPreview() {
     CalculatorTheme(darkTheme = false) {
         CalculatorScreen(
-            state = CalcState(expression = "1+2×3", preview = "7"),
+            state = CalcState(expression = "1+2×3", preview = "7", upper = "柒元整"),
             onKey = {},
             onHistorySelect = {},
             onHistoryClear = {},

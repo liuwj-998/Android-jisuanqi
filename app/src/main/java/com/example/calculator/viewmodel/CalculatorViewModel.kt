@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.calculator.data.HistoryRepository
 import com.example.calculator.domain.CalcResult
 import com.example.calculator.domain.CalculatorEngine
+import com.example.calculator.domain.ChineseAmountFormatter
 import com.example.calculator.domain.InputProcessor
 import com.example.calculator.domain.InputSnapshot
 import com.example.calculator.domain.NumberFormatter
@@ -55,7 +56,14 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
             resultValue = item.value.ifEmpty { item.result.replace(",", "") },
         )
         _state.update {
-            it.copy(expression = item.expression, preview = item.result, error = null)
+            it.copy(
+                expression = item.expression,
+                preview = item.result,
+                error = null,
+                upper = item.value.ifEmpty { item.result.replace(",", "") }
+                    .toBigDecimalOrNull()
+                    ?.let(ChineseAmountFormatter::format),
+            )
         }
     }
 
@@ -67,17 +75,17 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
     private fun refresh() {
         val expression = snapshot.expression
         if (expression.isEmpty()) {
-            _state.update { it.copy(expression = "", preview = "0", error = null) }
+            _state.update { it.copy(expression = "", preview = "0", error = null, upper = null) }
             return
         }
         val target = expression.trimEnd { it in TRAILING_CHARS }
         when (val result = engine.evaluate(target)) {
             is CalcResult.Success -> _state.update {
-                it.copy(expression = expression, preview = NumberFormatter.format(result.value), error = null)
+                it.copy(expression = expression, preview = NumberFormatter.format(result.value), error = null, upper = null)
             }
 
             is CalcResult.Failure -> _state.update {
-                it.copy(expression = expression, preview = "", error = null)
+                it.copy(expression = expression, preview = "", error = null, upper = null)
             }
         }
     }
@@ -93,11 +101,18 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
                     justEvaluated = true,
                     resultValue = result.value.toPlainString(),
                 )
-                _state.update { it.copy(expression = expression, preview = formatted, error = null) }
+                _state.update {
+                    it.copy(
+                        expression = expression,
+                        preview = formatted,
+                        error = null,
+                        upper = ChineseAmountFormatter.format(result.value),
+                    )
+                }
                 recordHistory(expression, formatted, result.value.toPlainString())
             }
 
-            is CalcResult.Failure -> _state.update { it.copy(preview = "", error = result.message) }
+            is CalcResult.Failure -> _state.update { it.copy(preview = "", error = result.message, upper = null) }
         }
     }
 

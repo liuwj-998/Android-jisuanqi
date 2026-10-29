@@ -1,13 +1,21 @@
 // [新增] 通用计算器按键：按用途区分配色
 package com.example.calculator.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,12 +23,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
+// [新增] 长按连删的起延时与重复间隔
+private const val REPEAT_START_DELAY_MS = 500L
+private const val REPEAT_INTERVAL_MS = 80L
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CalcButton(
     spec: KeySpec,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onRepeat: (() -> Unit)? = null,
 ) {
     val container = when (spec.style) {
         KeyStyle.Number -> MaterialTheme.colorScheme.surfaceContainerHighest
@@ -37,11 +53,42 @@ fun CalcButton(
         KeyStyle.Danger -> MaterialTheme.colorScheme.error
     }
 
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+
+    // [新增] 按住不放时重复触发（退格连续删除）
+    if (onRepeat != null) {
+        LaunchedEffect(pressed) {
+            if (pressed) {
+                delay(REPEAT_START_DELAY_MS)
+                while (true) {
+                    onRepeat()
+                    delay(REPEAT_INTERVAL_MS)
+                }
+            }
+        }
+    }
+
+    val gestureModifier = if (onLongClick != null) {
+        Modifier.combinedClickable(
+            interactionSource = interactionSource,
+            indication = LocalIndication.current,
+            onClick = onClick,
+            onLongClick = onLongClick,
+        )
+    } else {
+        Modifier.clickable(
+            interactionSource = interactionSource,
+            indication = LocalIndication.current,
+            onClick = onClick,
+        )
+    }
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .background(container)
-            .clickable(onClick = onClick),
+            .then(gestureModifier),
         contentAlignment = Alignment.Center,
     ) {
         Text(

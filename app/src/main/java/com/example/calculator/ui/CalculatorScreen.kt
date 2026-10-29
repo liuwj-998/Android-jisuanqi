@@ -74,6 +74,7 @@ fun CalculatorScreen(
             )
             Keypad(
                 onKey = onKey,
+                onClearHistory = onHistoryClear,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.66f),

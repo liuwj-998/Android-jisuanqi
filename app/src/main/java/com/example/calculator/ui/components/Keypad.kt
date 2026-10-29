@@ -54,6 +54,7 @@ private val keypadRows: List<List<KeySpec>> = listOf(
 @Composable
 fun Keypad(
     onKey: (CalcKey) -> Unit,
+    onClearHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -71,6 +72,9 @@ fun Keypad(
                     CalcButton(
                         spec = spec,
                         onClick = { onKey(spec.key) },
+                        // [新增] 长按 AC 清空历史，按住退格连续删除
+                        onLongClick = if (spec.key == CalcKey.Clear) onClearHistory else null,
+                        onRepeat = if (spec.key == CalcKey.Backspace) ({ onKey(spec.key) }) else null,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),

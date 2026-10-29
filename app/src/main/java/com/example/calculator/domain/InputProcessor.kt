@@ -6,6 +6,7 @@ import com.example.calculator.model.CalcKey
 data class InputSnapshot(
     val expression: String = "",
     val justEvaluated: Boolean = false,
+    val resultValue: String = "",
 )
 
 object InputProcessor {
@@ -51,7 +52,7 @@ object InputProcessor {
     }
 
     private fun operator(current: InputSnapshot, symbol: Char): InputSnapshot {
-        val expression = current.expression
+        val expression = editableExpression(current)
         if (expression.isEmpty()) return current
         val last = expression.last()
         val next = when {
@@ -65,7 +66,7 @@ object InputProcessor {
 
     private fun percent(current: InputSnapshot): InputSnapshot {
         if (current.justEvaluated) {
-            return InputSnapshot(current.expression + "%")
+            return InputSnapshot(editableExpression(current) + "%")
         }
         val expression = current.expression
         val last = expression.lastOrNull() ?: return current
@@ -74,7 +75,7 @@ object InputProcessor {
     }
 
     private fun sign(current: InputSnapshot): InputSnapshot {
-        val expression = current.expression
+        val expression = editableExpression(current)
         if (expression.isEmpty()) return current
         val segment = trailingNumber(expression)
         if (segment.isEmpty() || segment == "0") return current
@@ -95,6 +96,10 @@ object InputProcessor {
         if (current.justEvaluated) return InputSnapshot()
         return InputSnapshot(current.expression.dropLast(1))
     }
+
+    /** 结果行带千分位格式化，继续计算时必须回退到未格式化的原始数值 */
+    private fun editableExpression(current: InputSnapshot): String =
+        if (current.justEvaluated) current.resultValue.ifEmpty { current.expression } else current.expression
 
     private fun trailingNumber(expression: String): String {
         var index = expression.length

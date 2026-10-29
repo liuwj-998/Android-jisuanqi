@@ -63,6 +63,14 @@ class InputProcessorTest {
     }
 
     @Test
+    fun `结果继续计算时不带入千分位`() {
+        val evaluated = InputSnapshot("1,235", justEvaluated = true, resultValue = "1235")
+        assertEquals("1235+", InputProcessor.process(evaluated, CalcKey.Operator('+')).expression)
+        assertEquals("-1235", InputProcessor.process(evaluated, CalcKey.Sign).expression)
+        assertEquals("1235%", InputProcessor.process(evaluated, CalcKey.Percent).expression)
+    }
+
+    @Test
     fun `结果后按退格清空`() {
         val evaluated = InputSnapshot("7", justEvaluated = true)
         val snapshot = InputProcessor.process(evaluated, CalcKey.Backspace)

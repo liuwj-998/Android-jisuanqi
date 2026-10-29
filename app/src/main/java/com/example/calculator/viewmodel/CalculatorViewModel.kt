@@ -11,6 +11,8 @@ import com.example.calculator.domain.ChineseAmountFormatter
 import com.example.calculator.domain.InputProcessor
 import com.example.calculator.domain.InputSnapshot
 import com.example.calculator.domain.NumberFormatter
+import com.example.calculator.domain.RepeatExtractor
+import com.example.calculator.domain.RepeatOperation
 import com.example.calculator.model.CalcKey
 import com.example.calculator.model.CalcState
 import com.example.calculator.model.HistoryItem
@@ -29,6 +31,9 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
 
     private var snapshot = InputSnapshot()
 
+    // [新增] 连续按等号时重复的运算
+    private var repeatOperation: RepeatOperation? = null
+
     private val _state = MutableStateFlow(CalcState())
     val state: StateFlow<CalcState> = _state.asStateFlow()
 
@@ -44,6 +49,7 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
         if (key == CalcKey.Equals) {
             evaluate()
         } else {
+            repeatOperation = null
             snapshot = InputProcessor.process(snapshot, key)
             refresh()
         }
@@ -55,6 +61,7 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
             justEvaluated = true,
             resultValue = item.value.ifEmpty { item.result.replace(",", "") },
         )
+        repeatOperation = RepeatExtractor.extract(item.expression)
         _state.update {
             it.copy(
                 expression = item.expression,
@@ -91,7 +98,13 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun evaluate() {
-        val expression = snapshot.expression
+        val expression = if (snapshot.justEvaluated) {
+            repeatOperation?.let {
+                RepeatExtractor.apply(snapshot.resultValue.ifEmpty { snapshot.expression }, it)
+            } ?: snapshot.expression
+        } else {
+            snapshot.expression
+        }
         if (expression.isEmpty()) return
         when (val result = engine.evaluate(expression)) {
             is CalcResult.Success -> {
@@ -101,6 +114,7 @@ class CalculatorViewModel(application: Application) : AndroidViewModel(applicati
                     justEvaluated = true,
                     resultValue = result.value.toPlainString(),
                 )
+                repeatOperation = RepeatExtractor.extract(expression)
                 _state.update {
                     it.copy(
                         expression = expression,

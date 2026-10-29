@@ -104,4 +104,41 @@ class InputProcessorTest {
         assertTrue(snapshot.expression.isEmpty())
         assertFalse(snapshot.justEvaluated)
     }
+
+    @Test
+    fun `智能括号按上下文插入`() {
+        assertEquals("(", press(CalcKey.Paren).expression)
+        assertEquals("1+(", press(CalcKey.Digit(1), CalcKey.Operator('+'), CalcKey.Paren).expression)
+        assertEquals(
+            "(1+2)",
+            press(CalcKey.Paren, CalcKey.Digit(1), CalcKey.Operator('+'), CalcKey.Digit(2), CalcKey.Paren).expression,
+        )
+        assertEquals(
+            "(1+2)×(",
+            press(
+                CalcKey.Paren, CalcKey.Digit(1), CalcKey.Operator('+'), CalcKey.Digit(2),
+                CalcKey.Paren, CalcKey.Paren,
+            ).expression,
+        )
+        assertEquals("5×(", press(CalcKey.Digit(5), CalcKey.Paren).expression)
+    }
+
+    @Test
+    fun `结果后按括号继续计算`() {
+        val evaluated = InputSnapshot("7", justEvaluated = true, resultValue = "7")
+        assertEquals("7×(", InputProcessor.process(evaluated, CalcKey.Paren).expression)
+    }
+
+    @Test
+    fun `表达式长度超过上限后忽略追加输入`() {
+        var snapshot = InputSnapshot()
+        repeat(80) { snapshot = InputProcessor.process(snapshot, CalcKey.Digit(1)) }
+        assertEquals(80, snapshot.expression.length)
+
+        val afterLimit = InputProcessor.process(snapshot, CalcKey.Digit(1))
+        assertEquals(snapshot.expression, afterLimit.expression)
+
+        val afterBackspace = InputProcessor.process(afterLimit, CalcKey.Backspace)
+        assertEquals(79, afterBackspace.expression.length)
+    }
 }

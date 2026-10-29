@@ -1,4 +1,4 @@
-// [新增] 四列五行键盘
+// [新增] 四列六行键盘：首行功能键，末行等号通栏
 package com.example.calculator.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -18,32 +18,35 @@ data class KeySpec(val label: String, val key: CalcKey, val style: KeyStyle)
 private val keypadRows: List<List<KeySpec>> = listOf(
     listOf(
         KeySpec("AC", CalcKey.Clear, KeyStyle.Danger),
-        KeySpec("⌫", CalcKey.Backspace, KeyStyle.Function),
+        KeySpec("( )", CalcKey.Paren, KeyStyle.Function),
         KeySpec("%", CalcKey.Percent, KeyStyle.Function),
-        KeySpec("÷", CalcKey.Operator('÷'), KeyStyle.Operator),
+        KeySpec("⌫", CalcKey.Backspace, KeyStyle.Function),
     ),
     listOf(
         KeySpec("7", CalcKey.Digit(7), KeyStyle.Number),
         KeySpec("8", CalcKey.Digit(8), KeyStyle.Number),
         KeySpec("9", CalcKey.Digit(9), KeyStyle.Number),
-        KeySpec("×", CalcKey.Operator('×'), KeyStyle.Operator),
+        KeySpec("÷", CalcKey.Operator('÷'), KeyStyle.Operator),
     ),
     listOf(
         KeySpec("4", CalcKey.Digit(4), KeyStyle.Number),
         KeySpec("5", CalcKey.Digit(5), KeyStyle.Number),
         KeySpec("6", CalcKey.Digit(6), KeyStyle.Number),
-        KeySpec("-", CalcKey.Operator('-'), KeyStyle.Operator),
+        KeySpec("×", CalcKey.Operator('×'), KeyStyle.Operator),
     ),
     listOf(
         KeySpec("1", CalcKey.Digit(1), KeyStyle.Number),
         KeySpec("2", CalcKey.Digit(2), KeyStyle.Number),
         KeySpec("3", CalcKey.Digit(3), KeyStyle.Number),
-        KeySpec("+", CalcKey.Operator('+'), KeyStyle.Operator),
+        KeySpec("-", CalcKey.Operator('-'), KeyStyle.Operator),
     ),
     listOf(
         KeySpec("±", CalcKey.Sign, KeyStyle.Function),
         KeySpec("0", CalcKey.Digit(0), KeyStyle.Number),
         KeySpec(".", CalcKey.Decimal, KeyStyle.Number),
+        KeySpec("+", CalcKey.Operator('+'), KeyStyle.Operator),
+    ),
+    listOf(
         KeySpec("=", CalcKey.Equals, KeyStyle.Equals),
     ),
 )

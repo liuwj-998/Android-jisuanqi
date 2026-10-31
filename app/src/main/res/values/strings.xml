@@ -9,7 +9,10 @@
     <string name="history_delete">删除该条记录</string>
     <string name="history_open">打开历史记录</string>
     <!-- [新增] 长按复制提示 -->
-    <string name="copy_result">已复制结果</string>
+    <string name="copy_result">已复制</string>
+    <!-- [新增] 复制菜单项 -->
+    <string name="copy_action_result">复制结果</string>
+    <string name="copy_action_upper">复制大写金额</string>
     <!-- [新增] 大写金额切换入口 -->
     <string name="upper_toggle">大写</string>
     <!-- [新增] 清空历史的撤销提示 -->

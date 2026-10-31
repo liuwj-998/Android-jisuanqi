@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,10 +56,16 @@ fun DisplayPanel(
     val expressionScroll = rememberScrollState()
     val resultScroll = rememberScrollState()
     val historyLabel = stringResource(R.string.history_open)
-    // [新增] 长按结果复制
+    // [新增] 长按结果复制：可选择复制结果或大写金额
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     val copiedMessage = stringResource(R.string.copy_result)
+    var copyMenuExpanded by rememberSaveable { mutableStateOf(false) }
+    val upperText = upper
+    val copyToClipboard: (String) -> Unit = { text ->
+        clipboard.setText(AnnotatedString(text))
+        Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
+    }
     // [新增] 大写金额默认不展示，按需展开
     var showUpper by rememberSaveable { mutableStateOf(false) }
     val upperToggleLabel = stringResource(R.string.upper_toggle)
@@ -133,24 +142,45 @@ fun DisplayPanel(
                     maxLines = 1,
                 )
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    text = result.ifEmpty { " " },
-                    modifier = Modifier
-                        .combinedClickable(
-                            onClick = {},
-                            onLongClick = {
-                                if (result.isNotEmpty() && !isError) {
-                                    clipboard.setText(AnnotatedString(result))
-                                    Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
-                                }
+                Box {
+                    Text(
+                        text = result.ifEmpty { " " },
+                        modifier = Modifier
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = {
+                                    if (result.isNotEmpty() && !isError) {
+                                        copyMenuExpanded = true
+                                    }
+                                },
+                            )
+                            .horizontalScroll(resultScroll),
+                        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        fontSize = resultFont,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                    )
+                    DropdownMenu(
+                        expanded = copyMenuExpanded,
+                        onDismissRequest = { copyMenuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.copy_action_result)) },
+                            onClick = {
+                                copyToClipboard(result)
+                                copyMenuExpanded = false
                             },
                         )
-                        .horizontalScroll(resultScroll),
-                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                    fontSize = resultFont,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.copy_action_upper)) },
+                            enabled = !upperText.isNullOrEmpty(),
+                            onClick = {
+                                upperText?.let(copyToClipboard)
+                                copyMenuExpanded = false
+                            },
+                        )
+                    }
+                }
                 if (showUpper && !upper.isNullOrEmpty()) {
                     Spacer(Modifier.height(6.dp))
                     Text(

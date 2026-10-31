@@ -25,14 +25,33 @@ internal class ExpressionParser(private val tokens: List<Token>) {
             val operator = peekOperator() ?: break
             if (operator.symbol != '+' && operator.symbol != '-') break
             index++
+            val termStart = index
             val right = parseTerm()
-            value = if (operator.symbol == '+') {
-                value.add(right, CALC_MATH_CONTEXT)
-            } else {
-                value.subtract(right, CALC_MATH_CONTEXT)
+            // [新增] 加减号后的裸百分数按左侧数值的比例计算：100+10% 得 110
+            val relative = tokens.subList(termStart, index).isBarePercent()
+            value = when {
+                operator.symbol == '+' && relative ->
+                    value.add(value.multiply(right, CALC_MATH_CONTEXT), CALC_MATH_CONTEXT)
+
+                operator.symbol == '+' -> value.add(right, CALC_MATH_CONTEXT)
+                relative -> value.subtract(value.multiply(right, CALC_MATH_CONTEXT), CALC_MATH_CONTEXT)
+                else -> value.subtract(right, CALC_MATH_CONTEXT)
             }
         }
         return value
+    }
+
+    /** 判断一段 token 是否只是"可选正负号 + 数字 + 百分号"，用于区分比例语义与普通数 */
+    private fun List<Token>.isBarePercent(): Boolean {
+        if (isEmpty()) return false
+        val body = if (first() is Token.Operator && (first() as Token.Operator).symbol in SIGNS) {
+            drop(1)
+        } else {
+            this
+        }
+        return body.size >= 2 &&
+            body.first() is Token.Number &&
+            body.drop(1).all { it is Token.Percent }
     }
 
     private fun parseTerm(): BigDecimal {
@@ -106,5 +125,6 @@ internal class ExpressionParser(private val tokens: List<Token>) {
 
     private companion object {
         val HUNDRED: BigDecimal = BigDecimal("100")
+        val SIGNS = setOf('+', '-')
     }
 }

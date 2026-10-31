@@ -51,9 +51,13 @@ class CalculatorEngineTest {
     }
 
     @Test
-    fun `百分号按除以一百处理`() {
+    fun `百分号加减按左侧比例计算`() {
         assertEquals("0.05", evaluate("5%"))
-        assertEquals("100.1", evaluate("100+10%"))
+        assertEquals("110", evaluate("100+10%"))
+        assertEquals("90", evaluate("100-10%"))
+        assertEquals("115.5", evaluate("100+10%+5%"))
+        assertEquals("10", evaluate("100×10%"))
+        assertEquals("1,000", evaluate("100÷10%"))
         assertEquals("0.25", evaluate("50%×50%"))
     }
 

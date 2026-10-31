@@ -46,6 +46,19 @@ class HistoryRepository(context: Context) {
         }
     }
 
+    /** [新增] 删除单条历史：表达式、结果与时间戳一致才移除 */
+    suspend fun remove(item: HistoryItem) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val updated = _items.value.filterNot {
+                it.expression == item.expression &&
+                    it.result == item.result &&
+                    it.timestamp == item.timestamp
+            }
+            save(updated)
+            _items.value = updated
+        }
+    }
+
     /** [新增] 撤销清空：把备份的历史写回并恢复上限 */
     suspend fun restore(items: List<HistoryItem>) = withContext(Dispatchers.IO) {
         mutex.withLock {

@@ -21,8 +21,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.calculator.R
 import com.example.calculator.model.HistoryItem
 
@@ -31,6 +34,7 @@ import com.example.calculator.model.HistoryItem
 fun HistorySheet(
     history: List<HistoryItem>,
     onSelect: (HistoryItem) -> Unit,
+    onDelete: (HistoryItem) -> Unit,
     onClear: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -73,7 +77,11 @@ fun HistorySheet(
                         items = history,
                         key = { "${it.expression}|${it.result}|${it.timestamp}" },
                     ) { item ->
-                        HistoryRow(item = item, onClick = { onSelect(item) })
+                        HistoryRow(
+                            item = item,
+                            onClick = { onSelect(item) },
+                            onDelete = { onDelete(item) },
+                        )
                     }
                 }
             }
@@ -82,27 +90,44 @@ fun HistorySheet(
 }
 
 @Composable
-private fun HistoryRow(item: HistoryItem, onClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 10.dp),
+private fun HistoryRow(item: HistoryItem, onClick: () -> Unit, onDelete: () -> Unit) {
+    val deleteLabel = stringResource(R.string.history_delete)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = item.expression,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = "= ${item.result}",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 8.dp, vertical = 10.dp),
+        ) {
+            Text(
+                text = item.expression,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "= ${item.result}",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        // [新增] 单条删除入口
+        TextButton(
+            onClick = onDelete,
+            modifier = Modifier.semantics { contentDescription = deleteLabel },
+        ) {
+            Text(
+                text = "×",
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }

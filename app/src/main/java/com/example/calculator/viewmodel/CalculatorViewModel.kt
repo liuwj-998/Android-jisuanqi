@@ -93,6 +93,11 @@ class CalculatorViewModel(
         }
     }
 
+    /** [新增] 删除单条历史记录 */
+    fun deleteHistory(item: HistoryItem) {
+        viewModelScope.launch(Dispatchers.IO) { historyRepository.remove(item) }
+    }
+
     fun clearHistory() {
         val backup = _state.value.history
         if (backup.isEmpty()) return

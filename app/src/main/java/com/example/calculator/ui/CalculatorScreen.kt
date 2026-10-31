@@ -46,6 +46,7 @@ fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel()) {
         state = state,
         onKey = viewModel::onKey,
         onHistorySelect = viewModel::useHistory,
+        onHistoryDelete = viewModel::deleteHistory,
         onHistoryClear = viewModel::clearHistory,
         onHistoryUndo = viewModel::undoClearHistory,
     )
@@ -56,6 +57,7 @@ fun CalculatorScreen(
     state: CalcState,
     onKey: (CalcKey) -> Unit,
     onHistorySelect: (HistoryItem) -> Unit,
+    onHistoryDelete: (HistoryItem) -> Unit,
     onHistoryClear: () -> Unit,
     onHistoryUndo: () -> Unit,
     modifier: Modifier = Modifier,
@@ -125,6 +127,7 @@ fun CalculatorScreen(
                 onHistorySelect(item)
                 showHistory = false
             },
+            onDelete = onHistoryDelete,
             onClear = {
                 clearWithUndo()
                 showHistory = false
@@ -142,6 +145,7 @@ private fun CalculatorScreenPreview() {
             state = CalcState(expression = "1+2×3", preview = "7", upper = "柒元整"),
             onKey = {},
             onHistorySelect = {},
+            onHistoryDelete = {},
             onHistoryClear = {},
             onHistoryUndo = {},
         )

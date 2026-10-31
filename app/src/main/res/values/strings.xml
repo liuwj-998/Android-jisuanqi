@@ -5,6 +5,8 @@
     <string name="history_title">历史记录</string>
     <string name="history_empty">还没有计算记录</string>
     <string name="history_clear">清空</string>
+    <!-- [新增] 单条历史删除 -->
+    <string name="history_delete">删除该条记录</string>
     <string name="history_open">打开历史记录</string>
     <!-- [新增] 长按复制提示 -->
     <string name="copy_result">已复制结果</string>

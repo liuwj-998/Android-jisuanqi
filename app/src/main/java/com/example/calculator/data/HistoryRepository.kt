@@ -3,9 +3,13 @@ package com.example.calculator.data
 
 import android.content.Context
 import com.example.calculator.model.HistoryItem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -14,23 +18,35 @@ class HistoryRepository(context: Context) {
     private val preferences = context.applicationContext
         .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    private val _items = MutableStateFlow(load())
+    // [新增] 串行化读写，避免异步加载与写入互相覆盖
+    private val mutex = Mutex()
+
+    private val _items = MutableStateFlow<List<HistoryItem>>(emptyList())
     val items: StateFlow<List<HistoryItem>> = _items.asStateFlow()
 
-    fun record(item: HistoryItem) {
-        val updated = (listOf(item) + _items.value)
-            .distinctBy { it.expression to it.result }
-            .take(MAX_ITEMS)
-        save(updated)
-        _items.value = updated
+    /** [新增] 由 ViewModel 在启动时触发，把读盘与解析移出主线程 */
+    suspend fun load() = withContext(Dispatchers.IO) {
+        mutex.withLock { _items.value = readItems() }
     }
 
-    fun clear() {
-        save(emptyList())
-        _items.value = emptyList()
+    suspend fun record(item: HistoryItem) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val updated = (listOf(item) + _items.value)
+                .distinctBy { it.expression to it.result }
+                .take(MAX_ITEMS)
+            save(updated)
+            _items.value = updated
+        }
     }
 
-    private fun load(): List<HistoryItem> {
+    suspend fun clear() = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            save(emptyList())
+            _items.value = emptyList()
+        }
+    }
+
+    private fun readItems(): List<HistoryItem> {
         val raw = preferences.getString(KEY_ITEMS, null) ?: return emptyList()
         return runCatching {
             val array = JSONArray(raw)

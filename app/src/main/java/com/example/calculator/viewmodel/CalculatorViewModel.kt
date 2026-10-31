@@ -48,6 +48,8 @@ class CalculatorViewModel(
 
     init {
         restoreState()
+        // [新增] 历史记录改为异步加载，避免主线程读盘
+        viewModelScope.launch { historyRepository.load() }
         viewModelScope.launch {
             historyRepository.items.collect { items ->
                 _state.update { it.copy(history = items) }

@@ -1,4 +1,4 @@
-// [新增] 历史记录面板：点击回填，支持一键清空
+// [新增] 历史记录面板：点击回填，支持单条删除与一键清空
 package com.example.calculator.ui.components
 
 import androidx.compose.foundation.clickable
@@ -39,50 +39,67 @@ fun HistorySheet(
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(
+        HistoryContent(
+            history = history,
+            onSelect = onSelect,
+            onDelete = onDelete,
+            onClear = onClear,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.history_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = onClear, enabled = history.isNotEmpty()) {
-                    Text(stringResource(R.string.history_clear))
-                }
-            }
+        )
+    }
+}
 
-            if (history.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.history_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 24.dp),
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 420.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    items(
-                        items = history,
-                        key = { "${it.expression}|${it.result}|${it.timestamp}" },
-                    ) { item ->
-                        HistoryRow(
-                            item = item,
-                            onClick = { onSelect(item) },
-                            onDelete = { onDelete(item) },
-                        )
-                    }
+/** [新增] 历史内容本体：底部弹层与宽屏常驻侧栏共用 */
+@Composable
+fun HistoryContent(
+    history: List<HistoryItem>,
+    onSelect: (HistoryItem) -> Unit,
+    onDelete: (HistoryItem) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+    fillHeight: Boolean = false,
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.history_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onClear, enabled = history.isNotEmpty()) {
+                Text(stringResource(R.string.history_clear))
+            }
+        }
+
+        if (history.isEmpty()) {
+            Text(
+                text = stringResource(R.string.history_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 24.dp),
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (fillHeight) Modifier.weight(1f) else Modifier.heightIn(max = 420.dp)),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                items(
+                    items = history,
+                    key = { "${it.expression}|${it.result}|${it.timestamp}" },
+                ) { item ->
+                    HistoryRow(
+                        item = item,
+                        onClick = { onSelect(item) },
+                        onDelete = { onDelete(item) },
+                    )
                 }
             }
         }

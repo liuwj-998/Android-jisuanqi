@@ -50,6 +50,8 @@ fun DisplayPanel(
     result: String,
     upper: String?,
     isError: Boolean,
+    // [新增] 宽屏布局下历史常驻左侧，可隐藏顶部历史入口
+    showHistoryButton: Boolean = true,
     onOpenHistory: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -122,15 +124,19 @@ fun DisplayPanel(
                         }
                     }
                     Spacer(Modifier.weight(1f))
-                    TextButton(
-                        onClick = onOpenHistory,
-                        modifier = Modifier.semantics { contentDescription = historyLabel },
-                    ) {
-                        Text(
-                            text = "≡",
-                            fontSize = 20.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    if (showHistoryButton) {
+                        TextButton(
+                            onClick = onOpenHistory,
+                            modifier = Modifier.semantics { contentDescription = historyLabel },
+                        ) {
+                            Text(
+                                text = "≡",
+                                fontSize = 20.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        Spacer(Modifier.height(40.dp))
                     }
                 }
                 Spacer(Modifier.weight(1f))

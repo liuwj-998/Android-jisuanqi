@@ -1,19 +1,24 @@
-// [新增] 计算器主界面：显示区 + 键盘 + 历史记录面板
+// [新增] 计算器主界面：显示区 + 键盘 + 历史记录，宽屏时历史常驻左侧
 package com.example.calculator.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,6 +38,7 @@ import com.example.calculator.model.CalcKey
 import com.example.calculator.model.CalcState
 import com.example.calculator.model.HistoryItem
 import com.example.calculator.ui.components.DisplayPanel
+import com.example.calculator.ui.components.HistoryContent
 import com.example.calculator.ui.components.HistorySheet
 import com.example.calculator.ui.components.Keypad
 import com.example.calculator.ui.theme.CalculatorTheme
@@ -84,55 +90,117 @@ fun CalculatorScreen(
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding(),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            DisplayPanel(
-                expression = state.expression,
-                result = state.error ?: state.preview,
-                upper = state.upper,
-                isError = state.error != null,
-                onOpenHistory = { showHistory = true },
+        // [新增] 宽度达到阈值时切换为历史常驻双栏
+        val wide = maxWidth >= WIDE_BREAKPOINT
+
+        if (wide) {
+            Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.34f),
-            )
-            Keypad(
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .width(340.dp)
+                        .fillMaxHeight(),
+                    shape = RoundedCornerShape(28.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    HistoryContent(
+                        history = state.history,
+                        onSelect = onHistorySelect,
+                        onDelete = onHistoryDelete,
+                        onClear = clearWithUndo,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        fillHeight = true,
+                    )
+                }
+                CalculatorColumn(
+                    state = state,
+                    onKey = onKey,
+                    onClearHistory = clearWithUndo,
+                    showHistoryButton = false,
+                    onOpenHistory = { showHistory = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                )
+            }
+        } else {
+            CalculatorColumn(
+                state = state,
                 onKey = onKey,
                 onClearHistory = clearWithUndo,
+                showHistoryButton = true,
+                onOpenHistory = { showHistory = true },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.66f),
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
             )
         }
+
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-    }
 
-    if (showHistory) {
-        HistorySheet(
-            history = state.history,
-            onSelect = { item ->
-                onHistorySelect(item)
-                showHistory = false
-            },
-            onDelete = onHistoryDelete,
-            onClear = {
-                clearWithUndo()
-                showHistory = false
-            },
-            onDismiss = { showHistory = false },
+        if (!wide && showHistory) {
+            HistorySheet(
+                history = state.history,
+                onSelect = { item ->
+                    onHistorySelect(item)
+                    showHistory = false
+                },
+                onDelete = onHistoryDelete,
+                onClear = {
+                    clearWithUndo()
+                    showHistory = false
+                },
+                onDismiss = { showHistory = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalculatorColumn(
+    state: CalcState,
+    onKey: (CalcKey) -> Unit,
+    onClearHistory: () -> Unit,
+    showHistoryButton: Boolean,
+    onOpenHistory: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        DisplayPanel(
+            expression = state.expression,
+            result = state.error ?: state.preview,
+            upper = state.upper,
+            isError = state.error != null,
+            showHistoryButton = showHistoryButton,
+            onOpenHistory = onOpenHistory,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.34f),
+        )
+        Keypad(
+            onKey = onKey,
+            onClearHistory = onClearHistory,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.66f),
         )
     }
 }
@@ -151,3 +219,5 @@ private fun CalculatorScreenPreview() {
         )
     }
 }
+
+private val WIDE_BREAKPOINT = 600.dp

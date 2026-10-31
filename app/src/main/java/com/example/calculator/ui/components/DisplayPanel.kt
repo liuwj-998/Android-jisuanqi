@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,11 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calculator.R
@@ -65,82 +68,103 @@ fun DisplayPanel(
         resultScroll.animateScrollTo(resultScroll.maxValue)
     }
 
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            horizontalAlignment = Alignment.End,
+    BoxWithConstraints(modifier = modifier) {
+        val density = LocalDensity.current
+        // [新增] 字号按可用高度与文本长度自适应，系统放大字体时不会溢出面板
+        val resultFont = minFont(
+            preferred = if (result.length > 16) 28.sp else 36.sp,
+            cap = with(density) { (maxHeight * 0.30f).toSp() },
+        )
+        val expressionFont = minFont(
+            preferred = 18.sp,
+            cap = with(density) { (maxHeight * 0.13f).toSp() },
+        )
+        val upperFont = minFont(
+            preferred = if (upper != null && upper.length > 18) 12.sp else 14.sp,
+            cap = with(density) { (maxHeight * 0.08f).toSp() },
+        )
+
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.End,
             ) {
-                if (!upper.isNullOrEmpty()) {
-                    TextButton(onClick = { showUpper = !showUpper }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (!upper.isNullOrEmpty()) {
+                        TextButton(onClick = { showUpper = !showUpper }) {
+                            Text(
+                                text = upperToggleLabel,
+                                fontSize = 14.sp,
+                                color = if (showUpper) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            )
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    TextButton(
+                        onClick = onOpenHistory,
+                        modifier = Modifier.semantics { contentDescription = historyLabel },
+                    ) {
                         Text(
-                            text = upperToggleLabel,
-                            fontSize = 14.sp,
-                            color = if (showUpper) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
+                            text = "≡",
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
                 Spacer(Modifier.weight(1f))
-                TextButton(
-                    onClick = onOpenHistory,
-                    modifier = Modifier.semantics { contentDescription = historyLabel },
-                ) {
+                Text(
+                    text = expression.ifEmpty { " " },
+                    modifier = Modifier.horizontalScroll(expressionScroll),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = expressionFont,
+                    maxLines = 1,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = result.ifEmpty { " " },
+                    modifier = Modifier
+                        .combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                if (result.isNotEmpty() && !isError) {
+                                    clipboard.setText(AnnotatedString(result))
+                                    Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                        )
+                        .horizontalScroll(resultScroll),
+                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    fontSize = resultFont,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                )
+                if (showUpper && !upper.isNullOrEmpty()) {
+                    Spacer(Modifier.height(6.dp))
                     Text(
-                        text = "≡",
-                        fontSize = 20.sp,
+                        text = upper,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = upperFont,
+                        maxLines = 2,
                     )
                 }
-            }
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = expression.ifEmpty { " " },
-                modifier = Modifier.horizontalScroll(expressionScroll),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 18.sp,
-                maxLines = 1,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = result.ifEmpty { " " },
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = {},
-                        onLongClick = {
-                            if (result.isNotEmpty() && !isError) {
-                                clipboard.setText(AnnotatedString(result))
-                                Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                    )
-                    .horizontalScroll(resultScroll),
-                color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-            )
-            if (showUpper && !upper.isNullOrEmpty()) {
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = upper,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = if (upper.length > 18) 12.sp else 14.sp,
-                    maxLines = 2,
-                )
             }
         }
     }
 }
+
+/** 取 preferred 与高度上限中较小的字号 */
+private fun minFont(preferred: TextUnit, cap: TextUnit): TextUnit =
+    if (preferred.value > cap.value) cap else preferred

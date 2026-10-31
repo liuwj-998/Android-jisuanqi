@@ -22,11 +22,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.calculator.R
 import com.example.calculator.model.CalcKey
 import kotlinx.coroutines.delay
 
@@ -118,20 +120,21 @@ fun CalcButton(
 }
 
 // [新增] 符号键的读屏文案：数字键仍由文本自身播报，无需重复描述
+@Composable
 private fun CalcKey.contentDescription(): String? = when (this) {
     is CalcKey.Operator -> when (symbol) {
-        '+' -> "加"
-        '-' -> "减"
-        '×' -> "乘"
-        else -> "除"
+        '+' -> stringResource(R.string.key_add)
+        '-' -> stringResource(R.string.key_sub)
+        '×' -> stringResource(R.string.key_mul)
+        else -> stringResource(R.string.key_div)
     }
 
-    CalcKey.Decimal -> "小数点"
-    CalcKey.Percent -> "百分号"
-    CalcKey.Sign -> "正负号"
-    CalcKey.Clear -> "清空"
-    CalcKey.Backspace -> "退格"
-    CalcKey.Equals -> "等号"
-    CalcKey.Paren -> "括号"
+    CalcKey.Decimal -> stringResource(R.string.key_decimal)
+    CalcKey.Percent -> stringResource(R.string.key_percent)
+    CalcKey.Sign -> stringResource(R.string.key_sign)
+    CalcKey.Clear -> stringResource(R.string.key_clear)
+    CalcKey.Backspace -> stringResource(R.string.key_backspace)
+    CalcKey.Equals -> stringResource(R.string.key_equals)
+    CalcKey.Paren -> stringResource(R.string.key_paren)
     is CalcKey.Digit -> null
 }

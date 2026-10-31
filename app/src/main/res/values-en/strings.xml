@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- [新增] 英文界面文案 -->
+<resources>
+    <string name="app_name">Calculator</string>
+    <string name="history_title">History</string>
+    <string name="history_empty">No calculations yet</string>
+    <string name="history_clear">Clear</string>
+    <string name="history_delete">Delete this record</string>
+    <string name="history_open">Open history</string>
+    <string name="copy_result">Copied</string>
+    <string name="copy_action_result">Copy result</string>
+    <string name="copy_action_upper">Copy amount in words</string>
+    <string name="upper_toggle">Words</string>
+    <string name="history_cleared">History cleared</string>
+    <string name="undo">Undo</string>
+    <string name="key_add">Add</string>
+    <string name="key_sub">Subtract</string>
+    <string name="key_mul">Multiply</string>
+    <string name="key_div">Divide</string>
+    <string name="key_decimal">Decimal point</string>
+    <string name="key_percent">Percent</string>
+    <string name="key_sign">Plus or minus</string>
+    <string name="key_clear">Clear</string>
+    <string name="key_backspace">Backspace</string>
+    <string name="key_equals">Equals</string>
+    <string name="key_paren">Parentheses</string>
+</resources>

@@ -18,4 +18,16 @@
     <!-- [新增] 清空历史的撤销提示 -->
     <string name="history_cleared">历史记录已清空</string>
     <string name="undo">撤销</string>
+    <!-- [新增] 符号键读屏文案 -->
+    <string name="key_add">加</string>
+    <string name="key_sub">减</string>
+    <string name="key_mul">乘</string>
+    <string name="key_div">除</string>
+    <string name="key_decimal">小数点</string>
+    <string name="key_percent">百分号</string>
+    <string name="key_sign">正负号</string>
+    <string name="key_clear">清空</string>
+    <string name="key_backspace">退格</string>
+    <string name="key_equals">等号</string>
+    <string name="key_paren">括号</string>
 </resources>

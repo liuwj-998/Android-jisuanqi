@@ -63,11 +63,11 @@ fun CalcButton(
     // [新增] 触感反馈与无障碍描述
     val haptic = LocalHapticFeedback.current
     val description = spec.key.contentDescription()
-    val handleClick = {
+    val handleClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         onClick()
     }
-    val handleLongClick = {
+    val handleLongClick: () -> Unit = {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         onLongClick?.invoke()
     }

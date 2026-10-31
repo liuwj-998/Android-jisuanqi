@@ -10,16 +10,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.calculator.R
 import com.example.calculator.model.CalcKey
 import com.example.calculator.model.CalcState
 import com.example.calculator.model.HistoryItem
@@ -28,6 +37,7 @@ import com.example.calculator.ui.components.HistorySheet
 import com.example.calculator.ui.components.Keypad
 import com.example.calculator.ui.theme.CalculatorTheme
 import com.example.calculator.viewmodel.CalculatorViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel()) {
@@ -37,6 +47,7 @@ fun CalculatorRoute(viewModel: CalculatorViewModel = viewModel()) {
         onKey = viewModel::onKey,
         onHistorySelect = viewModel::useHistory,
         onHistoryClear = viewModel::clearHistory,
+        onHistoryUndo = viewModel::undoClearHistory,
     )
 }
 
@@ -46,9 +57,30 @@ fun CalculatorScreen(
     onKey: (CalcKey) -> Unit,
     onHistorySelect: (HistoryItem) -> Unit,
     onHistoryClear: () -> Unit,
+    onHistoryUndo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showHistory by rememberSaveable { mutableStateOf(false) }
+    // [新增] 清空历史后的撤销提示
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val clearedMessage = stringResource(R.string.history_cleared)
+    val undoLabel = stringResource(R.string.undo)
+    val clearWithUndo: () -> Unit = {
+        if (state.history.isNotEmpty()) {
+            onHistoryClear()
+            scope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = clearedMessage,
+                    actionLabel = undoLabel,
+                    duration = SnackbarDuration.Short,
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                    onHistoryUndo()
+                }
+            }
+        }
+    }
 
     Box(
         modifier = modifier
@@ -74,12 +106,16 @@ fun CalculatorScreen(
             )
             Keypad(
                 onKey = onKey,
-                onClearHistory = onHistoryClear,
+                onClearHistory = clearWithUndo,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(0.66f),
             )
         }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 
     if (showHistory) {
@@ -89,7 +125,10 @@ fun CalculatorScreen(
                 onHistorySelect(item)
                 showHistory = false
             },
-            onClear = onHistoryClear,
+            onClear = {
+                clearWithUndo()
+                showHistory = false
+            },
             onDismiss = { showHistory = false },
         )
     }
@@ -104,6 +143,7 @@ private fun CalculatorScreenPreview() {
             onKey = {},
             onHistorySelect = {},
             onHistoryClear = {},
+            onHistoryUndo = {},
         )
     }
 }

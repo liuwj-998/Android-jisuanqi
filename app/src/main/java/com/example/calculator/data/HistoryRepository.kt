@@ -46,6 +46,15 @@ class HistoryRepository(context: Context) {
         }
     }
 
+    /** [新增] 撤销清空：把备份的历史写回并恢复上限 */
+    suspend fun restore(items: List<HistoryItem>) = withContext(Dispatchers.IO) {
+        mutex.withLock {
+            val restored = items.take(MAX_ITEMS)
+            save(restored)
+            _items.value = restored
+        }
+    }
+
     private fun readItems(): List<HistoryItem> {
         val raw = preferences.getString(KEY_ITEMS, null) ?: return emptyList()
         return runCatching {

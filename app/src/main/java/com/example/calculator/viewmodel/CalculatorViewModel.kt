@@ -18,6 +18,7 @@ import com.example.calculator.model.CalcKey
 import com.example.calculator.model.CalcState
 import com.example.calculator.model.HistoryItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +43,10 @@ class CalculatorViewModel(
 
     // [新增] 连续按等号时重复的运算
     private var repeatOperation: RepeatOperation? = restoreRepeatOperation()
+
+    // [新增] 清空历史前的备份与清空任务，用于撤销
+    private var clearedHistory: List<HistoryItem>? = null
+    private var clearJob: Job? = null
 
     private val _state = MutableStateFlow(CalcState())
     val state: StateFlow<CalcState> = _state.asStateFlow()
@@ -89,7 +94,20 @@ class CalculatorViewModel(
     }
 
     fun clearHistory() {
-        viewModelScope.launch(Dispatchers.IO) { historyRepository.clear() }
+        val backup = _state.value.history
+        if (backup.isEmpty()) return
+        clearedHistory = backup
+        clearJob = viewModelScope.launch(Dispatchers.IO) { historyRepository.clear() }
+    }
+
+    /** [新增] 撤销清空：等清空任务结束后把备份写回 */
+    fun undoClearHistory() {
+        val backup = clearedHistory ?: return
+        clearedHistory = null
+        viewModelScope.launch(Dispatchers.IO) {
+            clearJob?.join()
+            historyRepository.restore(backup)
+        }
     }
 
     /** 实时预览：输入过程中算式可能不完整，此时只清空预览，不向用户报错 */

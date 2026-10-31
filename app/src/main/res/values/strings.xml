@@ -10,4 +10,7 @@
     <string name="copy_result">已复制结果</string>
     <!-- [新增] 大写金额切换入口 -->
     <string name="upper_toggle">大写</string>
+    <!-- [新增] 清空历史的撤销提示 -->
+    <string name="history_cleared">历史记录已清空</string>
+    <string name="undo">撤销</string>
 </resources>

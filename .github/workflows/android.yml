@@ -59,7 +59,7 @@ jobs:
           "$tools/aapt" dump badging "$apk" | head -5
           permissions="$("$tools/aapt" dump permissions "$apk")"
           printf '%s\n' "$permissions"
-          printf '%s\n' "$permissions" | python3 -c 'import sys; lines=[s.strip() for s in sys.stdin if s.strip().startswith("uses-permission")]; assert all("android.permission.INTERNET" in s for s in lines), "APK 只允许申请 INTERNET 权限"'
+          printf '%s\n' "$permissions" | python3 -c 'import re,sys; lines=[s.strip() for s in sys.stdin if s.strip().startswith("uses-permission")]; matched=[re.fullmatch(r"uses-permission: name=\x27([^\x27]+)\x27", s) for s in lines]; assert all(matched), "存在无法识别的权限声明"; names=[m.group(1) for m in matched]; assert all(n=="android.permission.INTERNET" or n.startswith("com.example.calculator.") for n in names), "APK 只允许 INTERNET 与应用自身签名权限"'
 
       - name: Upload lint report
         if: ${{ always() }}
